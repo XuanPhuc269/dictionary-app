@@ -19,7 +19,7 @@ const highlightSlice = createSlice({
         removeHighlight: (state, action: PayloadAction<string>) => {
             state.highlights = state.highlights.filter(h => h.id !== action.payload);
         },
-        updateHighlightNote: (state, action: PayloadAction<{ id: string; note: string }>) => {
+        updateHighlight: (state, action: PayloadAction<{ id: string; note: string }>) => {
             const highlight = state.highlights.find(h => h.id === action.payload.id);
             if (highlight) {
                 highlight.note = action.payload.note;
@@ -28,6 +28,6 @@ const highlightSlice = createSlice({
     }
 });
 
-export const { addHighlight, removeHighlight, updateHighlightNote } = highlightSlice.actions;
+export const { addHighlight, removeHighlight, updateHighlight } = highlightSlice.actions;
 
 export default highlightSlice.reducer;

@@ -12,4 +12,6 @@ const HighlightSchema: Schema = new Schema({
     createdAt: { type: Date, default: Date.now },
 });
 
-export default model<IHighlight>('Highlight', HighlightSchema);
+const Highlight = mongoose.model<IHighlight>('Highlight', HighlightSchema);
+
+export default Highlight;

@@ -41,7 +41,7 @@ export const fetchWordDefinition = createAsyncThunk(
     'dictionary/fetchWord',
     async (word: string, { rejectWithValue }) => {
         try {
-            const response = await fetch(`http://localhost:3001/api/dictionary/${word}`);
+            const response = await fetch(`http://localhost:3001/api/lookup/${word}`);
 
             if (!response.ok) {
                 throw new Error('Word not found');

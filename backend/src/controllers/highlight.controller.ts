@@ -40,7 +40,7 @@ export const createHighlight = async (req: Request, res: Response): Promise<void
 };
 
 // PUT
-export const updateHighlight = async (req: Request, res: Response): Promise<void> => {
+export const updateHighlightById = async (req: Request, res: Response): Promise<void> => {
     try {
         const highlight = await Highlight.findByIdAndUpdate(req.params.id, req.body, { new: true });
         if (!highlight) {
@@ -55,7 +55,7 @@ export const updateHighlight = async (req: Request, res: Response): Promise<void
 };
 
 // DELETE
-export const deleteHighlight = async (req: Request, res: Response): Promise<void> => {
+export const deleteHighlightById = async (req: Request, res: Response): Promise<void> => {
     try {
         const highlight = await Highlight.findByIdAndDelete(req.params.id);
         if (!highlight) {
