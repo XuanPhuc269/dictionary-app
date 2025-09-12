@@ -14,7 +14,15 @@ const highlightSlice = createSlice({
     initialState,
     reducers: {
         addHighlight: (state, action: PayloadAction<Highlight>) => {
-            state.highlights.push(action.payload);
+            // Check if highlight with same ID already exists
+            const exists = state.highlights.some(h => h.id === action.payload.id);
+            if (!exists) {
+                state.highlights.push(action.payload);
+            }
+        },
+        setAllHighlights: (state, action: PayloadAction<Highlight[]>) => {
+            // Replace all highlights (use when fetching from backend)
+            state.highlights = action.payload;
         },
         removeHighlight: (state, action: PayloadAction<string>) => {
             state.highlights = state.highlights.filter(h => h.id !== action.payload);
@@ -28,6 +36,6 @@ const highlightSlice = createSlice({
     }
 });
 
-export const { addHighlight, removeHighlight, updateHighlight } = highlightSlice.actions;
+export const { addHighlight, setAllHighlights, removeHighlight, updateHighlight } = highlightSlice.actions;
 
 export default highlightSlice.reducer;

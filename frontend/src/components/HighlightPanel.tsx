@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Typography,
@@ -25,13 +25,24 @@ import { removeHighlight, updateHighlight } from "../slice/highlightSlice";
 interface HighlightPanelProps {
   highlights: Highlight[];
   onLookup: (text: string) => void;
+  onDelete?: () => void; 
 }
 
-export function HighlightPanel({ highlights, onLookup }: HighlightPanelProps) {
+export function HighlightPanel({ highlights, onLookup, onDelete }: HighlightPanelProps) {
   const [expanded, setExpanded] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editNote, setEditNote] = useState("");
   const dispatch = useAppDispatch();
+  
+  // Debug unique IDs
+  useEffect(() => {
+    const ids = highlights.map(h => h.id);
+    const uniqueIds = new Set(ids);
+    if (ids.length !== uniqueIds.size) {
+      console.warn('Duplicate highlight IDs detected:', 
+        ids.filter((id, index) => ids.indexOf(id) !== index));
+    }
+  }, [highlights]);
 
   const handleEdit = (highlight: Highlight) => {
     setEditingId(highlight.id);
@@ -40,6 +51,7 @@ export function HighlightPanel({ highlights, onLookup }: HighlightPanelProps) {
 
   const handleSave = async (id: string) => {
     try {
+      console.log(`Saving highlight with ID: ${id}`);
       const updated = await apiUpdateHighlight(id, { note: editNote });
       dispatch(updateHighlight({ id: updated.id, note: updated.note || "" }));
       setEditingId(null);
@@ -51,8 +63,14 @@ export function HighlightPanel({ highlights, onLookup }: HighlightPanelProps) {
 
   const handleDelete = async (id: string) => {
     try {
+      console.log(`Deleting highlight with ID: ${id}`);
       await apiDeleteHighlight(id);
       dispatch(removeHighlight(id));
+      
+      // Call the onDelete callback if provided
+      if (onDelete) {
+        onDelete();
+      }
     } catch (error) {
       console.error("Failed to delete highlight:", error);
     }
@@ -103,8 +121,9 @@ export function HighlightPanel({ highlights, onLookup }: HighlightPanelProps) {
           </Box>
         ) : (
           <List sx={{ p: 0 }}>
+            {/* Use composite key of ID + index to ensure uniqueness */}
             {highlights.map((highlight, index) => (
-              <React.Fragment key={highlight.id}>
+              <React.Fragment key={`${highlight.id}-${index}`}>
                 {index > 0 && <Divider />}
                 <ListItem
                   sx={{
@@ -164,6 +183,7 @@ export function HighlightPanel({ highlights, onLookup }: HighlightPanelProps) {
                               <IconButton
                                 size="small"
                                 onClick={() => handleDelete(highlight.id)}
+                                data-highlight-id={highlight.id}
                               >
                                 <DeleteIcon fontSize="small" />
                               </IconButton>

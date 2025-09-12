@@ -81,8 +81,8 @@ const DictionaryPopup: React.FC<DictionaryPopupProps> = ({
     >
       <DialogTitle
         sx={{
-            display: "flex",
-            justifyContent: "flex-end",
+          display: "flex",
+          justifyContent: "flex-end",
           pb: 1,
           px: 3,
           pt: 2,
@@ -112,7 +112,12 @@ const DictionaryPopup: React.FC<DictionaryPopupProps> = ({
 
         {status === "succeeded" && data && (
           <Box>
-            <Typography variant="h5" component="div" fontWeight="500" sx={{ px: 3, py: 1}}>
+            <Typography
+              variant="h5"
+              component="div"
+              fontWeight="500"
+              sx={{ px: 3, py: 1 }}
+            >
               {word}
             </Typography>
             {/* Pronunciation Section */}

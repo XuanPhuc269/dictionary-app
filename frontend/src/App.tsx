@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Container, 
-  Grid, 
   AppBar,
   Toolbar,
   Typography,
@@ -14,7 +13,10 @@ import {
   TextField,
   useTheme,
   useMediaQuery,
-  Paper
+  Paper,
+  Snackbar,
+  Slide,
+  Alert
 } from '@mui/material';
 import { useAppDispatch, useAppSelector } from './app/hooks';
 import { fetchWordDefinition, setSearchWord } from './slice/dictionarySlice';
@@ -37,6 +39,16 @@ function App() {
   const [highlightNote, setHighlightNote] = useState('');
   const [currentHighlight, setCurrentHighlight] = useState<string>('');
   const [showNoteDialog, setShowNoteDialog] = useState(false);
+  const [notification, setNotification] = useState<{
+    open: boolean;
+    message: string;
+    type: 'success' | 'error' | 'info' | 'warning';
+  }>({
+    open: false,
+    message: '',
+    type: 'success'
+  });
+  
   
   // Fetch highlights from the backend
   useEffect(() => {
@@ -74,13 +86,39 @@ function App() {
     try {
       const savedHighlight = await saveHighlight(highlight);
       dispatch(addHighlight(savedHighlight));
+      // Show success notification
+      setNotification({
+        open: true,
+        message: 'Highlight saved successfully!',
+        type: 'success'
+      });
     } catch (error) {
       console.error('Failed to save highlight:', error);
       dispatch(addHighlight(highlight));
+      // Show error notification
+      setNotification({
+        open: true,
+        message: 'Failed to save highlight to server',
+        type: 'error'
+      });
     }
     
     setShowNoteDialog(false);
     setHighlightNote('');
+  };
+  
+  // Function to handle highlight deletion notifications
+  const handleHighlightDeleted = () => {
+    setNotification({
+      open: true,
+      message: 'Highlight deleted successfully',
+      type: 'error'
+    });
+  };
+
+  // Close notification
+  const handleCloseNotification = () => {
+    setNotification({...notification, open: false});
   };
 
   return (
@@ -137,7 +175,8 @@ function App() {
           }}>
             <HighlightPanel 
               highlights={highlights} 
-              onLookup={handleLookup} 
+              onLookup={handleLookup}
+              onDelete={handleHighlightDeleted}
             />
           </Box>
         </Box>
@@ -213,6 +252,24 @@ function App() {
             </Button>
           </DialogActions>
         </Dialog>
+
+        {/* Notification Snackbar */}
+        <Snackbar 
+          open={notification.open} 
+          autoHideDuration={2000} 
+          onClose={handleCloseNotification}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+          TransitionComponent={(props) => <Slide {...props} direction="left" />}
+        >
+          <Alert 
+            onClose={handleCloseNotification} 
+            severity={notification.type} 
+            variant="filled"
+            sx={{ width: '100%' }}
+          >
+            {notification.message}
+          </Alert>
+        </Snackbar>
       </Container>
     </Box>
   );
