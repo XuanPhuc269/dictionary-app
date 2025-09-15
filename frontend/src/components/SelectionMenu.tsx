@@ -1,11 +1,20 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Paper, Button, ButtonGroup, Popover } from '@mui/material';
-import { useAppDispatch } from '../app/hooks';
-import { fetchWordDefinition } from '../slice/dictionarySlice';
+import { 
+  getSelectionPosition, 
+  getMobileSelection, 
+  initMobileTextSelection,
+  suppressIOSTextSelection,
+  getTextedPosition 
+} from '../services/selectionService';
 
 
 interface SelectionMenuProps {
-    onHighlight: (text: string) => void;
+    onHighlight: (text: string, position?: {
+      paragraphIndex: number;
+      startOffset: number;
+      endOffset: number;
+    }) => void;
     onLookup: (text: string) => void;
 }
 
@@ -13,47 +22,88 @@ export const SelectionMenu: React.FC<SelectionMenuProps> = ({ onHighlight, onLoo
     const [selectedText, setSelectedText] = useState('');
     const [position, setPosition] = useState({ top: 0, left: 0 });
     const [open, setOpen] = useState(false);
-    const dispatch = useAppDispatch();
+    const [isMobile, setIsMobile] = useState(false);
+    const [selectedPosition, setSelectedPosition] = useState<{
+      paragraphIndex: number;
+      startOffset: number;
+      endOffset: number;
+    } | null>(null);
+    const isIOS = useRef(/iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream);
 
     useEffect(() => {
-        const handleSelection = () => {
-            const selection = window.getSelection();
-            const text = selection?.toString().trim() || '';
+        // Initialize mobile-specific handlers
+        initMobileTextSelection();
+        setIsMobile(/iPhone|iPad|iPod|Android/i.test(navigator.userAgent));
 
-            if (text) {
-                setSelectedText(text);
+        const handleSelection = async (e: MouseEvent | TouchEvent) => {
+            // For iOS, we need to prevent default immediately
+            if (isIOS.current && e.type === 'touchend') {
+                e.preventDefault(); 
+            }
 
-                if (selection && selection.rangeCount > 0) {
-                    const range = selection.getRangeAt(0);
-                    const rect = range.getBoundingClientRect();
-                    setPosition({
-                        top: rect.bottom + window.scrollY,
-                        left: rect.left + window.scrollX + (rect.width / 2)
-                    });
-                    setOpen(true);
-                }
+            // Different handling for mobile vs desktop
+            if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+                setTimeout(async () => {
+                    const { text, range } = await getMobileSelection();
+                    if (text) {
+                        setSelectedText(text);
+                        const pos = getSelectionPosition(range);
+                        setPosition(pos);
+                        setOpen(true);
+                        
+                        if (isIOS.current) {
+                            e.preventDefault();
+                        }
+                    }
+                }, isIOS.current ? 600 : 500); 
             } else {
-                setOpen(false);
+                // Desktop selection
+                const { text, range, position } = getTextedPosition();
+                if (text) {
+                    setSelectedText(text);
+                    setSelectedPosition(position);
+                    const pos = getSelectionPosition(range);
+                    setPosition(pos);
+                    setOpen(true);
+                } else {
+                    setOpen(false);
+                }
             }
         };
 
         document.addEventListener('mouseup', handleSelection);
-        document.addEventListener('touchend', handleSelection);
+        document.addEventListener('touchend', handleSelection, { passive: false }); // passive: false is important for iOS
+
+        // iOS-specific selection event handler
+        const handleSelectionChange = () => {
+            // Only used to detect selection clearing on iOS
+            const selection = window.getSelection();
+            if (!selection || selection.toString().trim() === '') {
+                if (open) {
+                    setTimeout(() => setOpen(false), 200);
+                }
+            }
+        };
+
+        document.addEventListener('selectionchange', handleSelectionChange);
 
         return () => {
             document.removeEventListener('mouseup', handleSelection);
             document.removeEventListener('touchend', handleSelection);
+            document.removeEventListener('selectionchange', handleSelectionChange);
         };
-    }, []);
+    }, [open]);
 
     const handleLookup = () => {
         onLookup(selectedText);
         setOpen(false);
+        suppressIOSTextSelection(); 
     };
 
     const handleHighlight = () => {
-        onHighlight(selectedText);
+        onHighlight(selectedText, selectedPosition || undefined);
         setOpen(false);
+        suppressIOSTextSelection();
     };
 
     return (
@@ -63,14 +113,34 @@ export const SelectionMenu: React.FC<SelectionMenuProps> = ({ onHighlight, onLoo
             anchorPosition={{ top: position.top, left: position.left }}
             anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
             transformOrigin={{ vertical: 'top', horizontal: 'center' }}
-            onClose={() => setOpen(false)}
+            onClose={() => {
+                setOpen(false);
+                suppressIOSTextSelection(); // Clear iOS selection when closing
+            }}
+            PaperProps={{
+                elevation: 3,
+                sx: { 
+                    borderRadius: 2,
+                    overflow: 'hidden'
+                }
+            }}
         >
-            <Paper sx={{ p: 1 }}>
-                <ButtonGroup variant="text" aria-label="text button group" size="small">
+            <Paper sx={{ p: isMobile ? 1 : 0.5 }}>
+                <ButtonGroup 
+                    variant="text" 
+                    aria-label="text button group" 
+                    size={isMobile ? "medium" : "small"}
+                    sx={{ 
+                        '& .MuiButton-root': {
+                            px: isMobile ? 3 : 2,
+                            py: isMobile ? 1 : 0.5
+                        }
+                    }}
+                >
                     <Button onClick={handleLookup}>Look Up</Button>
                     <Button onClick={handleHighlight}>Highlight</Button>
                 </ButtonGroup>
             </Paper>
         </Popover>
     );
-}
+};

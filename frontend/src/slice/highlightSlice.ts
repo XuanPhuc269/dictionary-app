@@ -14,14 +14,12 @@ const highlightSlice = createSlice({
     initialState,
     reducers: {
         addHighlight: (state, action: PayloadAction<Highlight>) => {
-            // Check if highlight with same ID already exists
             const exists = state.highlights.some(h => h.id === action.payload.id);
             if (!exists) {
                 state.highlights.push(action.payload);
             }
         },
         setAllHighlights: (state, action: PayloadAction<Highlight[]>) => {
-            // Replace all highlights (use when fetching from backend)
             state.highlights = action.payload;
         },
         removeHighlight: (state, action: PayloadAction<string>) => {

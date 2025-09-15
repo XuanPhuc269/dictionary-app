@@ -48,6 +48,11 @@ function App() {
     message: '',
     type: 'success'
   });
+  const [currentPosition, setCurrentPosition] = useState<{
+    paragraphIndex: number;
+    startOffset: number;
+    endOffset: number;
+  } | null>(null);
   
   
   // Fetch highlights from the backend
@@ -72,13 +77,26 @@ function App() {
     setShowDictionary(true);
   };
 
-  const handleHighlight = (text: string) => {
+  const handleHighlight = (
+    text: string, 
+    position?: {
+      paragraphIndex: number;
+      startOffset: number;
+      endOffset: number;
+    }
+  ) => {
     setCurrentHighlight(text);
+    setCurrentPosition(position || null);
     setShowNoteDialog(true);
   };
 
   const handleSaveHighlight = async () => {
-    const highlight = createHighlight(currentHighlight);
+    const highlight = createHighlight(
+      currentHighlight, 
+      '#ffeb3b', 
+      currentPosition || undefined
+    );
+    
     if (highlightNote) {
       highlight.note = highlightNote;
     }
@@ -86,7 +104,6 @@ function App() {
     try {
       const savedHighlight = await saveHighlight(highlight);
       dispatch(addHighlight(savedHighlight));
-      // Show success notification
       setNotification({
         open: true,
         message: 'Highlight saved successfully!',
@@ -95,7 +112,6 @@ function App() {
     } catch (error) {
       console.error('Failed to save highlight:', error);
       dispatch(addHighlight(highlight));
-      // Show error notification
       setNotification({
         open: true,
         message: 'Failed to save highlight to server',
@@ -105,9 +121,9 @@ function App() {
     
     setShowNoteDialog(false);
     setHighlightNote('');
+    setCurrentPosition(null);
   };
   
-  // Function to handle highlight deletion notifications
   const handleHighlightDeleted = () => {
     setNotification({
       open: true,
@@ -116,7 +132,6 @@ function App() {
     });
   };
 
-  // Close notification
   const handleCloseNotification = () => {
     setNotification({...notification, open: false});
   };
@@ -264,7 +279,6 @@ function App() {
           <Alert 
             onClose={handleCloseNotification} 
             severity={notification.type} 
-            variant="filled"
             sx={{ width: '100%' }}
           >
             {notification.message}

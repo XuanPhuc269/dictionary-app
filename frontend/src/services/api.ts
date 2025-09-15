@@ -2,15 +2,14 @@ import { Highlight } from './highlightService';
 
 const API_URL = 'http://localhost:3001/api';
 
-// Helper to transform MongoDB document to frontend Highlight
 const transformMongoDocument = (doc: any): Highlight => {
-  // Make sure we're consistent with IDs - MongoDB uses _id
   return {
-    id: doc._id.toString(), // Ensure it's a string
+    id: doc._id.toString(),
     text: doc.text,
     note: doc.note,
     color: doc.color || '#ffeb3b',
-    createdAt: doc.createdAt
+    createdAt: doc.createdAt,
+    position: doc.position
   };
 };
 
@@ -23,7 +22,8 @@ export const saveHighlight = async (highlight: Highlight): Promise<Highlight> =>
     body: JSON.stringify({
       text: highlight.text,
       note: highlight.note,
-      color: highlight.color
+      color: highlight.color,
+      position: highlight.position
     }),
   });
 

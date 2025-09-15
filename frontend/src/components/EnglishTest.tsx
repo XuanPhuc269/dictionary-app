@@ -10,9 +10,74 @@ import {
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
+import { useAppSelector } from "../app/hooks";
 
 const EnglishTest: React.FC = () => {
   const [showInstructions, setShowInstructions] = useState(true);
+  const { highlights } = useAppSelector(state => state.highlights);
+
+  const paragraphs = [
+    "The concept of sustainability has gained significant traction in recent years. Sustainability refers to meeting our present needs without compromising the ability of future generations to meet their own needs. This approach integrates three main pillars: environmental protection, social responsibility, and economic viability.",
+    "Environmental sustainability focuses on maintaining the quality of our natural resources and ensuring the long-term health of our planet. This includes reducing carbon emissions, conserving biodiversity, and preventing pollution. Organizations increasingly implement practices such as renewable energy usage and waste reduction to minimize their ecological footprint.",
+    "Social sustainability addresses human rights, equity, and community well-being. It promotes fair labor practices, diversity and inclusion, and community engagement. Companies that prioritize social sustainability create positive impacts for their employees, customers, and communities.",
+    "Economic sustainability ensures that businesses can maintain profitability while adhering to environmental and social standards. This dimension emphasizes long-term financial planning, responsible investment, and ethical business practices. Sustainable economic models often lead to innovation, efficiency improvements, and enhanced brand reputation."
+  ];
+
+  const renderParagraphWithHighlights = (text: string, paragraphIndex: number) => {
+    const paragraphHighlights = highlights.filter(
+      h => h.position && h.position.paragraphIndex === paragraphIndex
+    );
+    
+    if (paragraphHighlights.length === 0) {
+      return text; // No highlights in this paragraph
+    }
+    
+    const sortedHighlights = [...paragraphHighlights].sort(
+      (a, b) => (a.position?.startOffset || 0) - (b.position?.startOffset || 0)
+    );
+    
+    const segments = [];
+    let lastIndex = 0;
+    
+    for (const highlight of sortedHighlights) {
+      if (!highlight.position) continue;
+      
+      const { startOffset, endOffset } = highlight.position;
+      
+      if (startOffset > lastIndex) {
+        segments.push(
+          <span key={`text-${lastIndex}`}>
+            {text.substring(lastIndex, startOffset)}
+          </span>
+        );
+      }
+      
+      segments.push(
+        <span 
+          key={`highlight-${startOffset}`}
+          style={{
+            backgroundColor: highlight.color,
+            padding: '2px 0',
+            borderRadius: '2px'
+          }}
+        >
+          {text.substring(startOffset, endOffset)}
+        </span>
+      );
+      
+      lastIndex = endOffset;
+    }
+    
+    if (lastIndex < text.length) {
+      segments.push(
+        <span key={`text-${lastIndex}`}>
+          {text.substring(lastIndex)}
+        </span>
+      );
+    }
+    
+    return <>{segments}</>;
+  };
 
   return (
     <Paper
@@ -31,88 +96,21 @@ const EnglishTest: React.FC = () => {
       </Typography>
 
       <Box sx={{ flex: 1, overflowY: "auto", pr: 1 }}>
-        <Typography
-          variant="body1"
-          paragraph
-          sx={{
-            lineHeight: 1.7,
-            color: "text.primary",
-            fontSize: "1.05rem",
-          }}
-        >
-          The concept of sustainability has gained significant traction in
-          recent years. Sustainability refers to meeting our present needs
-          without compromising the ability of future generations to meet their
-          own needs. This approach integrates three main pillars: environmental
-          protection, social responsibility, and economic viability.
-        </Typography>
-
-        <Typography
-          variant="body1"
-          paragraph
-          sx={{
-            lineHeight: 1.7,
-            color: "text.primary",
-            fontSize: "1.05rem",
-          }}
-        >
-          Environmental sustainability focuses on maintaining the quality of our
-          natural resources and ensuring the long-term health of our planet.
-          This includes reducing carbon emissions, conserving biodiversity, and
-          preventing pollution. Organizations increasingly implement practices
-          such as renewable energy usage and waste reduction to minimize their
-          ecological footprint.
-        </Typography>
-
-        <Typography
-          variant="body1"
-          paragraph
-          sx={{
-            lineHeight: 1.7,
-            color: "text.primary",
-            fontSize: "1.05rem",
-          }}
-        >
-          Social sustainability addresses human rights, equity, and community
-          well-being. It promotes fair labor practices, diversity and inclusion,
-          and community engagement. Companies that prioritize social
-          sustainability create positive impacts for their employees, customers,
-          and communities.
-        </Typography>
-
-        <Typography
-          variant="body1"
-          paragraph
-          sx={{
-            lineHeight: 1.7,
-            color: "text.primary",
-            fontSize: "1.05rem",
-          }}
-        >
-          Economic sustainability ensures that businesses can maintain
-          profitability while adhering to environmental and social standards.
-          This dimension emphasizes long-term financial planning, responsible
-          investment, and ethical business practices. Sustainable economic
-          models often lead to innovation, efficiency improvements, and enhanced
-          brand reputation.
-        </Typography>
-
-        <Typography
-          variant="body1"
-          paragraph
-          sx={{
-            lineHeight: 1.7,
-            color: "text.primary",
-            fontSize: "1.05rem",
-          }}
-        >
-          The integration of these three dimensions presents both challenges and
-          opportunities. Organizations must balance short-term financial goals
-          with long-term sustainability objectives. However, those that
-          successfully implement sustainable practices often gain competitive
-          advantages, including cost savings, improved stakeholder relations,
-          and enhanced market positioning.
-        </Typography>
+        {paragraphs.map((paragraph, index) => (
+          <Typography
+            key={`paragraph-${index}`}
+            variant="body1"
+            paragraph
+            className="selectable-text"
+            sx={{
+              lineHeight: 1.7,
+              color: "text.primary",
+              fontSize: "1.05rem",
+            }}
+          >
+            {renderParagraphWithHighlights(paragraph, index)}
+          </Typography>
+        ))}
       </Box>
 
       {/* Help button (shows when instructions are hidden) */}
@@ -137,7 +135,6 @@ const EnglishTest: React.FC = () => {
         </Tooltip>
       )}
 
-      {/* Instruction Box with animation */}
       <Collapse in={showInstructions}>
         <Box
           sx={{
@@ -150,7 +147,6 @@ const EnglishTest: React.FC = () => {
             position: "relative",
           }}
         >
-          {/* Close button */}
           <IconButton
             size="small"
             onClick={() => setShowInstructions(false)}
@@ -171,8 +167,8 @@ const EnglishTest: React.FC = () => {
             Highlight important concepts to create your study notes.
           </Typography>
           <Button
-            variant="outlined"
             size="small"
+            variant="contained"
             sx={{
               textTransform: "none",
               borderRadius: 1.5,

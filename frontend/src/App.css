@@ -36,3 +36,63 @@
     transform: rotate(360deg);
   }
 }
+
+/* Add these styles for better mobile support */
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  overscroll-behavior-y: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Improve touch targets on iOS */
+button, 
+[role="button"], 
+input, 
+label {
+  touch-action: manipulation;
+  min-height: 44px; /* Apple's recommended minimum size */
+}
+
+/* Disable iOS highlighting */
+* {
+  -webkit-tap-highlight-color: rgba(0,0,0,0);
+}
+
+/* Disable text selection on UI elements, only allow in text areas */
+button, h1, h2, h3, h4, h5, h6, .MuiAppBar-root {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Enable text selection in reading areas */
+.selectable-text {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+.highlighted-text {
+  background-color: var(--highlight-color, #ffeb3b);
+  border-radius: 2px;
+  padding: 2px 0;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.highlighted-text:hover {
+  filter: brightness(95%);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Fix for iOS safe areas */
+@supports (padding: max(0px)) {
+  .safe-area-insets {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
